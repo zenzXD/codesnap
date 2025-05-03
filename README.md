@@ -1,6 +1,8 @@
 # CodeSnap
 
-A modern code sharing platform with beautiful syntax highlighting and tracking features.
+A modern code sharing platform with beautiful syntax highlighting and tracking features
+
+![Codesher Banner](ss.png)
 
 ## Project Structure
 
