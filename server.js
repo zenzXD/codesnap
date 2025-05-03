@@ -14,7 +14,9 @@ app.get('*', (req, res) => {
 });
 // Store IP addresses that liked files
 const ipLikes = {};
-
+app.use('/code', express.static(path.join(__dirname, 'code')));
+// Serve JSON config files
+app.use('/data', express.static(path.join(__dirname, 'data')));
 // Make sure we initialize the code and data directories
 const codeDir = path.join(__dirname, 'code');
 const dataDir = path.join(__dirname, 'data');
