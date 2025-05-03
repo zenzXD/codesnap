@@ -626,3 +626,6 @@ app.listen(PORT, () => {
   console.log(`CodeSnap server running on http://localhost:${PORT}`);
   initializeApp();
 });
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
