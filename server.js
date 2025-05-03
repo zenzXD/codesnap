@@ -127,6 +127,7 @@ fs.watch(codeDir, (eventType, filename) => {
 });
 
 // Routes
+app.use(express.static('public'));
 app.get('/api/list', (req, res) => {
   const config = syncFiles();
   res.json(config);
