@@ -1,0 +1,14 @@
+{
+  "name": "CodeSnap",
+  "description": "Share code snippets easily",
+  "author": "CodeSnap Team",
+  "contact": "contact@codesnap.com",
+  "social": {
+    "github": "https://github.com/codesnap",
+    "twitter": "https://twitter.com/codesnap"
+  },
+  "theme": {
+    "primary": "#3498db",
+    "secondary": "#2ecc71"
+  }
+}
