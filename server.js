@@ -6,82 +6,230 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// Fallback to index.html for any unknown routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Check if we're in development or production
+const isDev = process.env.NODE_ENV !== 'production';
+
 // Store IP addresses that liked files
 const ipLikes = {};
-app.use('/code', express.static(path.join(__dirname, 'code')));
-// Serve JSON config files
-app.use('/data', express.static(path.join(__dirname, 'data')));
+
+// In-memory storage for Vercel environment where file system is read-only
+let inMemoryConfig = {};
+let inMemorySiteConfig = {};
+
 // Make sure we initialize the code and data directories
 const codeDir = path.join(__dirname, 'code');
 const dataDir = path.join(__dirname, 'data');
 
-// Ensure required directories exist
-if (!fs.existsSync(codeDir)) {
-  fs.mkdirSync(codeDir, { recursive: true });
+// Ensure required directories exist (only in development)
+if (isDev) {
+  if (!fs.existsSync(codeDir)) {
+    fs.mkdirSync(codeDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
 }
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// Check if config.json exists, if not create it
+// Path to config.json
 const configPath = path.join(dataDir, 'config.json');
-if (!fs.existsSync(configPath)) {
-  fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
-}
-
-// Load site settings from siteConfig.json
-let siteConfig = {};
+// Path to siteConfig.json
 const siteConfigPath = path.join(dataDir, 'siteConfig.json');
 
+// Default site config
+const defaultSiteConfig = {
+  name: 'CodeSnap',
+  description: 'Share code snippets easily',
+  author: 'CodeSnap Team',
+  contact: 'contact@codesnap.com',
+  social: {
+    github: 'https://github.com/codesnap',
+    twitter: 'https://twitter.com/codesnap'
+  },
+  theme: {
+    primary: '#3498db',
+    secondary: '#2ecc71'
+  }
+};
+
+// Function to load site config
 function loadSiteConfig() {
+  // In production (Vercel), use in-memory config
+  if (!isDev) {
+    // If in-memory config is empty, initialize it
+    if (Object.keys(inMemorySiteConfig).length === 0) {
+      inMemorySiteConfig = defaultSiteConfig;
+    }
+    return inMemorySiteConfig;
+  }
+
+  // In development, use file system
   if (fs.existsSync(siteConfigPath)) {
     try {
-      siteConfig = JSON.parse(fs.readFileSync(siteConfigPath, 'utf-8'));
+      return JSON.parse(fs.readFileSync(siteConfigPath, 'utf-8'));
     } catch (error) {
       console.error('Error loading site config:', error);
-      siteConfig = {
-        name: 'CodeSnap',
-        description: 'Share code snippets easily',
-        author: 'CodeSnap Team',
-        contact: 'contact@codesnap.com',
-        social: {
-          github: 'https://github.com/codesnap',
-          twitter: 'https://twitter.com/codesnap'
-        },
-        theme: {
-          primary: '#3498db',
-          secondary: '#2ecc71'
-        }
-      };
-      fs.writeFileSync(siteConfigPath, JSON.stringify(siteConfig, null, 2));
+      // Create default site config if error
+      fs.writeFileSync(siteConfigPath, JSON.stringify(defaultSiteConfig, null, 2));
+      return defaultSiteConfig;
     }
   } else {
-    // Create default site config
-    siteConfig = {
-      name: 'CodeSnap',
-      description: 'Share code snippets easily',
-      author: 'CodeSnap Team',
-      contact: 'contact@codesnap.com',
-      social: {
-        github: 'https://github.com/codesnap',
-        twitter: 'https://twitter.com/codesnap'
-      },
-      theme: {
-        primary: '#3498db',
-        secondary: '#2ecc71'
-      }
-    };
-    fs.writeFileSync(siteConfigPath, JSON.stringify(siteConfig, null, 2));
+    // Create default site config if it doesn't exist
+    fs.writeFileSync(siteConfigPath, JSON.stringify(defaultSiteConfig, null, 2));
+    return defaultSiteConfig;
   }
-  return siteConfig;
 }
+
+// Default sample code files for production environment
+const sampleFiles = {
+  'example.js': {
+    content: `/**
+ * Example JavaScript file to demonstrate code sharing
+ */
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+
+class Calculator {
+  add(a, b) {
+    return a + b;
+  }
+  
+  subtract(a, b) {
+    return a - b;
+  }
+  
+  multiply(a, b) {
+    return a * b;
+  }
+  
+  divide(a, b) {
+    if (b === 0) {
+      throw new Error("Cannot divide by zero");
+    }
+    return a / b;
+  }
+}
+
+// Usage example
+const calc = new Calculator();
+console.log(greet("User"));
+console.log(\`2 + 3 = \${calc.add(2, 3)}\`);
+console.log(\`5 - 2 = \${calc.subtract(5, 2)}\`);
+console.log(\`4 * 6 = \${calc.multiply(4, 6)}\`);
+console.log(\`10 / 2 = \${calc.divide(10, 2)}\`);`,
+    metadata: {
+      title: 'Example JavaScript File',
+      likes: 0,
+      views: 0,
+      createdAt: '2025-05-03T12:00:00Z',
+      shortId: 'a1b2c3d4'
+    }
+  },
+  'style.css': {
+    content: `/**
+ * Modern CSS styles with variables and responsive design
+ */
+
+:root {
+  /* Main colors */
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --accent-color: #e74c3c;
+  --dark-color: #2c3e50;
+  --light-color: #ecf0f1;
+  
+  /* Typography */
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 4rem;
+  
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  line-height: 1.6;
+  color: var(--dark-color);
+  background-color: var(--light-color);
+}`,
+    metadata: {
+      title: 'CSS Styling Example',
+      likes: 0,
+      views: 0,
+      createdAt: '2025-05-03T12:30:00Z',
+      shortId: 'e5f6g7h8'
+    }
+  },
+  'app.py': {
+    content: `"""
+Example Python application with Flask
+A simple API server with database connection
+"""
+from flask import Flask, jsonify, request
+import sqlite3
+from datetime import datetime
+import os
+
+app = Flask(__name__)
+
+# Database setup
+DB_PATH = "database.db"
+
+def init_db():
+    """Initialize the database with tables if not exists"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Create users table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+# Initialize database on startup
+init_db()`,
+    metadata: {
+      title: 'Python Application',
+      likes: 0,
+      views: 0,
+      createdAt: '2025-05-03T13:00:00Z',
+      shortId: 'i9j0k1l2'
+    }
+  }
+};
 
 // Function to generate a unique ID for each file
 function generateUniqueId(length = 8) {
@@ -95,6 +243,23 @@ function generateUniqueId(length = 8) {
 
 // Function to synchronize files with config
 function syncFiles() {
+  // In production (Vercel), use in-memory config and sample files
+  if (!isDev) {
+    // If in-memory config is empty, initialize it with sample files
+    if (Object.keys(inMemoryConfig).length === 0) {
+      Object.entries(sampleFiles).forEach(([fileName, fileData]) => {
+        inMemoryConfig[fileName] = fileData.metadata;
+      });
+    }
+    return inMemoryConfig;
+  }
+
+  // In development, use file system
+  // Initialize config.json if it doesn't exist
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
+  }
+  
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   const fileNames = fs.readdirSync(codeDir);
   
@@ -124,13 +289,21 @@ function syncFiles() {
   return config;
 }
 
-// Watch the code directory for changes
-fs.watch(codeDir, (eventType, filename) => {
-  if (filename) {
-    console.log(`File ${filename} was ${eventType}d`);
-    syncFiles();
+// Only watch the code directory for changes in development mode
+if (isDev) {
+  // Initialize config.json if needed
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
   }
-});
+  
+  // Watch for file changes
+  fs.watch(codeDir, (eventType, filename) => {
+    if (filename) {
+      console.log(`File ${filename} was ${eventType}d`);
+      syncFiles();
+    }
+  });
+}
 
 // Routes
 app.get('/api/list', (req, res) => {
@@ -150,24 +323,90 @@ app.post('/api/save', (req, res) => {
     return res.status(400).json({ error: 'Invalid file name' });
   }
   
+  // In production (Vercel), use in-memory storage
+  if (!isDev) {
+    const shortId = generateUniqueId();
+    
+    // Add to in-memory configs
+    inMemoryConfig[fileName] = {
+      title: fileName,
+      likes: 0,
+      views: 0,
+      createdAt: new Date().toISOString(),
+      shortId: shortId
+    };
+    
+    // Add to sample files
+    sampleFiles[fileName] = {
+      content: content,
+      metadata: inMemoryConfig[fileName]
+    };
+    
+    return res.json({ success: true, shortId: shortId });
+  }
+  
+  // In development, use file system
   try {
     const filePath = path.join(codeDir, fileName);
     fs.writeFileSync(filePath, content);
     
-    // Update config.json
-    syncFiles();
+    // Update config.json with syncFiles
+    const config = syncFiles();
     
-    res.json({ success: true });
+    // Return the shortId for the new file
+    const shortId = config[fileName].shortId;
+    
+    res.json({ success: true, shortId: shortId });
   } catch (error) {
     console.error('Error saving file:', error);
     res.status(500).json({ error: 'Failed to save file' });
   }
 });
 
+// Add API endpoint for site config
+app.get('/api/site-config', (req, res) => {
+  const config = loadSiteConfig();
+  res.json(config);
+});
+
+app.get('/api/list', (req, res) => {
+  const config = syncFiles();
+  res.json(config);
+});
+
 app.post('/api/like/:shortId', (req, res) => {
   const { shortId } = req.params;
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   
+  // In production (Vercel), use in-memory config
+  if (!isDev) {
+    // Find the file with this shortId
+    let fileName = null;
+    Object.entries(inMemoryConfig).forEach(([name, data]) => {
+      if (data.shortId === shortId) {
+        fileName = name;
+      }
+    });
+    
+    if (!fileName) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Check if this IP has already liked this file
+    const likeKey = `${clientIp}-${shortId}`;
+    if (ipLikes[likeKey]) {
+      return res.json({ likes: inMemoryConfig[fileName].likes, alreadyLiked: true });
+    }
+    
+    // Mark this IP as having liked this file
+    ipLikes[likeKey] = true;
+    
+    inMemoryConfig[fileName].likes += 1;
+    
+    return res.json({ likes: inMemoryConfig[fileName].likes, alreadyLiked: false });
+  }
+  
+  // In development, use file system
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   
   // Find the file with this shortId
@@ -584,6 +823,29 @@ app.get('/:shortId', (req, res) => {
 app.get('/raw/:shortId', (req, res) => {
   const { shortId } = req.params;
   
+  // In production (Vercel), use in-memory config and sample files
+  if (!isDev) {
+    // Find the file with this shortId
+    let fileName = null;
+    
+    Object.entries(inMemoryConfig).forEach(([name, data]) => {
+      if (data.shortId === shortId) {
+        fileName = name;
+      }
+    });
+    
+    if (!fileName) {
+      return res.status(404).send('File not found');
+    }
+    
+    // Get file content from sample files
+    const fileContent = sampleFiles[fileName].content;
+    
+    res.setHeader('Content-Type', 'text/plain');
+    return res.send(fileContent);
+  }
+  
+  // In development, use file system
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   
   // Find the file with this shortId
@@ -610,7 +872,7 @@ app.get('/raw/:shortId', (req, res) => {
   res.send(fileContent);
 });
 
-// Add API endpoint for site config
+// Route for API site config 
 app.get('/api/site-config', (req, res) => {
   const config = loadSiteConfig();
   res.json(config);
@@ -618,20 +880,35 @@ app.get('/api/site-config', (req, res) => {
 
 // Initialize necessary data on server start
 function initializeApp() {
-  // Load site config
-  loadSiteConfig();
-  
-  // Sync files
-  syncFiles();
-  
-  console.log('App initialized successfully');
+  if (isDev) {
+    // Load site config from file
+    loadSiteConfig();
+    
+    // Sync files from file system
+    syncFiles();
+    
+    console.log('App initialized in development mode');
+  } else {
+    // Initialize in-memory configs for production (Vercel)
+    loadSiteConfig();
+    syncFiles();
+    
+    console.log('App initialized in production mode (Vercel)');
+  }
 }
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`CodeSnap server running on http://localhost:${PORT}`);
+// For Vercel serverless functions
+if (process.env.VERCEL) {
   initializeApp();
-});
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+}
+
+// Start server (only in development)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`CodeSnap server running on http://localhost:${PORT}`);
+    initializeApp();
+  });
+}
+
+// Export app for Vercel
+module.exports = app;
