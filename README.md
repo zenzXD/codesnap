@@ -29,8 +29,6 @@ project-root/
 - **URL Pendek**: URL yang enak dibaca dan dishare (misalnya /abc123)
 - **Syntax Highlighting**: Pemformatan kode yang cantik untuk berbagai bahasa pemrograman
 - **Sinkronisasi Otomatis**: Otomatis mendeteksi file baru dan update config
-- **Tracking Statistik**: Ngitung views dan likes untuk setiap snippet kode
-- **Likes Sekali Aja**: User cuma bisa ngelike kode sekali (pakai IP dan localStorage)
 - **Kopas Langsung**: Gampang copy kode dengan satu klik
 - **Pengaturan Kustom**: Ganti nama website, tema, dan info kontak sesuai keinginan
 
