@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const Analytics = require("@vercel/analytics/react");
 
 // Middleware
 app.use(express.json());
