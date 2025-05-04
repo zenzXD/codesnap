@@ -184,50 +184,6 @@ body {
       createdAt: '2025-05-03T12:30:00Z',
       shortId: 'e5f6g7h8'
     }
-  },
-  'app.py': {
-    content: `"""
-Example Python application with Flask
-A simple API server with database connection
-"""
-from flask import Flask, jsonify, request
-import sqlite3
-from datetime import datetime
-import os
-
-app = Flask(__name__)
-
-# Database setup
-DB_PATH = "database.db"
-
-def init_db():
-    """Initialize the database with tables if not exists"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Create users table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-    
-    conn.commit()
-    conn.close()
-
-# Initialize database on startup
-init_db()`,
-    metadata: {
-      title: 'Python Application',
-      likes: 0,
-      views: 0,
-      createdAt: '2025-05-03T13:00:00Z',
-      shortId: 'i9j0k1l2'
-    }
   }
 };
 
