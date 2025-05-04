@@ -306,6 +306,305 @@ if (isDev) {
 }
 
 // Route for API site config 
+app.get('/', (req, res) => {
+  const config = syncFiles();
+  const siteSettings = loadSiteConfig();// Add this route handler for the root path
+app.get('/', (req, res) => {
+  const config = syncFiles();
+  const siteSettings = loadSiteConfig();
+  
+  // Create HTML for the index page that lists all available files
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${siteSettings.name} - ${siteSettings.description}</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <style>
+        :root {
+          --primary-color: ${siteSettings.theme.primary};
+          --secondary-color: ${siteSettings.theme.secondary};
+          --bg-color: #f8f9fa;
+          --text-color: #333;
+        }
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          background-color: var(--bg-color);
+          color: var(--text-color);
+        }
+        
+        header {
+          background-color: var(--primary-color);
+          color: white;
+          padding: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .logo {
+          font-size: 1.5rem;
+          font-weight: bold;
+        }
+        
+        .logo a {
+          color: white;
+          text-decoration: none;
+        }
+        
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 1rem;
+        }
+        
+        h1 {
+          margin-bottom: 1rem;
+        }
+        
+        .file-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+        
+        .file-card {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          padding: 1rem;
+          transition: transform 0.2s ease;
+        }
+        
+        .file-card:hover {
+          transform: translateY(-5px);
+        }
+        
+        .file-title {
+          font-size: 1.2rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+        }
+        
+        .file-meta {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.9rem;
+          color: #6c757d;
+          margin-bottom: 1rem;
+        }
+        
+        .file-stats {
+          display: flex;
+          gap: 1rem;
+        }
+        
+        .file-stat {
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+        }
+        
+        .file-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+        
+        .btn {
+          padding: 0.5rem 1rem;
+          background-color: var(--primary-color);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          font-size: 0.9rem;
+        }
+        
+        .btn:hover {
+          background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary {
+          background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+          background-color: #5a6268;
+        }
+        
+        .upload-section {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          padding: 1.5rem;
+          margin-bottom: 2rem;
+        }
+        
+        .form-group {
+          margin-bottom: 1rem;
+        }
+        
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: bold;
+        }
+        
+        input, textarea {
+          width: 100%;
+          padding: 0.5rem;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-family: inherit;
+        }
+        
+        textarea {
+          min-height: 200px;
+          font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', monospace;
+        }
+        
+        footer {
+          margin-top: 3rem;
+          padding: 1rem;
+          background-color: #343a40;
+          color: white;
+          text-align: center;
+        }
+        
+        .social-links {
+          display: flex;
+          justify-content: center;
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+        
+        .social-links a {
+          color: white;
+          font-size: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+          .file-list {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <header>
+        <div class="logo"><a href="/">${siteSettings.name}</a></div>
+      </header>
+      
+      <div class="container">
+        <h1>Welcome to ${siteSettings.name}</h1>
+        <p>${siteSettings.description}</p>
+        
+        <div class="upload-section">
+          <h2>Upload New Code</h2>
+          <form id="uploadForm">
+            <div class="form-group">
+              <label for="fileName">File Name (with extension)</label>
+              <input type="text" id="fileName" name="fileName" required placeholder="e.g. example.js">
+            </div>
+            <div class="form-group">
+              <label for="fileContent">Code Content</label>
+              <textarea id="fileContent" name="fileContent" required placeholder="Paste your code here..."></textarea>
+            </div>
+            <button type="submit" class="btn">
+              <i class="fas fa-upload"></i> Upload Code
+            </button>
+          </form>
+        </div>
+        
+        <h2>Available Code Snippets</h2>
+        <div class="file-list">
+          ${Object.entries(config).map(([fileName, fileData]) => `
+            <div class="file-card">
+              <div class="file-title">${fileData.title}</div>
+              <div class="file-meta">
+                <div>Created: ${new Date(fileData.createdAt).toLocaleDateString()}</div>
+                <div class="file-stats">
+                  <div class="file-stat">
+                    <i class="fas fa-eye"></i> ${fileData.views}
+                  </div>
+                  <div class="file-stat">
+                    <i class="fas fa-heart"></i> ${fileData.likes}
+                  </div>
+                </div>
+              </div>
+              <div class="file-actions">
+                <a href="/${fileData.shortId}" class="btn">
+                  <i class="fas fa-code"></i> View
+                </a>
+                <a href="/raw/${fileData.shortId}" class="btn btn-secondary">
+                  <i class="fas fa-file-code"></i> Raw
+                </a>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      
+      <footer>
+        <p>&copy; ${new Date().getFullYear()} ${siteSettings.name} - ${siteSettings.description}</p>
+        <p>Created by ${siteSettings.author}</p>
+        <div class="social-links">
+          ${siteSettings.social.github ? `<a href="${siteSettings.social.github}" target="_blank"><i class="fab fa-github"></i></a>` : ''}
+          ${siteSettings.social.twitter ? `<a href="${siteSettings.social.twitter}" target="_blank"><i class="fab fa-twitter"></i></a>` : ''}
+        </div>
+      </footer>
+      
+      <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const fileName = document.getElementById('fileName').value;
+          const fileContent = document.getElementById('fileContent').value;
+          
+          try {
+            const response = await fetch('/api/save', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ fileName, content: fileContent })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // Redirect to the newly created file page
+              window.location.href = '/' + data.shortId;
+            } else {
+              alert('Error: ' + (data.error || 'Unknown error'));
+            }
+          } catch (error) {
+            console.error('Error saving file:', error);
+            alert('Error saving file');
+          }
+        });
+      </script>
+    </body>
+    </html>
+  `;
+  
+  res.send(html);
+});   })
 app.get('/api/site-config', (req, res) => {
   const config = loadSiteConfig();
   res.json(config);
