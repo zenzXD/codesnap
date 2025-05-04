@@ -210,15 +210,13 @@ function syncFiles() {
     return inMemoryConfig;
   }
 
-  // In development, use file system
-  // Initialize config.json if it doesn't exist
-  if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
-  }
-  
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  // Development mode: read from config file and sync
+  const config = fs.existsSync(configPath)
+    ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    : {};
+
   const fileNames = fs.readdirSync(codeDir);
-  
+
   // Add new files to config
   fileNames.forEach(fileName => {
     if (!config[fileName]) {
@@ -232,14 +230,14 @@ function syncFiles() {
       };
     }
   });
-  
+
   // Remove deleted files from config
   Object.keys(config).forEach(fileName => {
     if (!fileNames.includes(fileName)) {
       delete config[fileName];
     }
   });
-  
+
   // Save updated config
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   return config;
@@ -1214,11 +1212,6 @@ function initializeApp() {
 }
 
 // For Vercel serverless functions
-if (process.env.VERCEL) {
-  initializeApp();
-}
-
-// Start server (only in development)
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`CodeSnap server running on http://localhost:${PORT}`);
@@ -1226,5 +1219,5 @@ if (!process.env.VERCEL) {
   });
 }
 
-// Export app for Vercel
+// Export for Vercel
 module.exports = app;
