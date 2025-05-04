@@ -184,6 +184,50 @@ body {
       createdAt: '2025-05-03T12:30:00Z',
       shortId: 'e5f6g7h8'
     }
+  },
+  'app.py': {
+    content: `"""
+Example Python application with Flask
+A simple API server with database connection
+"""
+from flask import Flask, jsonify, request
+import sqlite3
+from datetime import datetime
+import os
+
+app = Flask(__name__)
+
+# Database setup
+DB_PATH = "database.db"
+
+def init_db():
+    """Initialize the database with tables if not exists"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Create users table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+# Initialize database on startup
+init_db()`,
+    metadata: {
+      title: 'Python Application',
+      likes: 0,
+      views: 0,
+      createdAt: '2025-05-03T13:00:00Z',
+      shortId: 'i9j0k1l2'
+    }
   }
 };
 
@@ -210,13 +254,15 @@ function syncFiles() {
     return inMemoryConfig;
   }
 
-  // Development mode: read from config file and sync
-  const config = fs.existsSync(configPath)
-    ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
-    : {};
-
+  // In development, use file system
+  // Initialize config.json if it doesn't exist
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
+  }
+  
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   const fileNames = fs.readdirSync(codeDir);
-
+  
   // Add new files to config
   fileNames.forEach(fileName => {
     if (!config[fileName]) {
@@ -230,14 +276,14 @@ function syncFiles() {
       };
     }
   });
-
+  
   // Remove deleted files from config
   Object.keys(config).forEach(fileName => {
     if (!fileNames.includes(fileName)) {
       delete config[fileName];
     }
   });
-
+  
   // Save updated config
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   return config;
@@ -744,8 +790,162 @@ app.get('/:shortId', (req, res) => {
   const fileExtension = path.extname(fileName).substring(1);
   
   // Create an HTML page with syntax highlighting using highlight.js
-
   const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${fileData.title} - ${siteSettings.name}</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+      <style>
+        :root {
+          --primary-color: ${siteSettings.theme.primary};
+          --secondary-color: ${siteSettings.theme.secondary};
+          --bg-color: #f8f9fa;
+          --code-bg: #282c34;
+          --text-color: #333;
+          --light-text: #f8f9fa;
+        }
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          background-color: var(--bg-color);
+          color: var(--text-color);
+        }
+        
+        header {
+          background-color: var(--primary-color);
+          color: white;
+          padding: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .logo {
+          font-size: 1.5rem;
+          font-weight: bold;
+        }
+        
+        .logo a {
+          color: white;
+          text-decoration: none;
+        }
+        
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 1rem;
+        }
+        
+        .code-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        
+        .code-title {
+          font-size: 1.5rem;
+          font-weight: bold;
+        }
+        
+        .stats {
+          display: flex;
+          gap: 1rem;
+        }
+        
+        .stat {
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+        }
+        
+        .code-container {
+          background-color: var(--code-bg);
+          border-radius: 8px;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .code-toolbar {
+          background-color: #21252b;
+          padding: 0.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .file-info {
+          color: #abb2bf;
+          font-size: 0.9rem;
+        }
+        
+        .toolbar-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+        
+        .toolbar-btn {
+          background: none;
+          border: none;
+          color: #abb2bf;
+          cursor: pointer;
+          padding: 0.3rem 0.5rem;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          font-size: 0.85rem;
+        }
+        
+        .toolbar-btn:hover {
+          background-color: #2c313a;
+        }
+        
+        pre {
+          margin: 0;
+          padding: 1rem;
+          border-radius: 0;
+          overflow: auto;
+          max-height: 70vh;
+        }
+        
+        code {
+          font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', monospace;
+          font-size: 14px;
+        }
+        
+        .actions {
+          margin-top: 1rem;
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        
+        .btn {
+          padding: 0.5rem 1rem;
+          background-color: var(--primary-color);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 1rem;
+          display: flex;
+          align-items: center;
+    const html = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -1086,6 +1286,7 @@ app.get('/:shortId', (req, res) => {
   `;
   
   res.send(html);
+  });
 // Bagian endpoint untuk raw file
 app.get('/raw/:shortId', (req, res) => {
   const { shortId } = req.params;
@@ -1212,6 +1413,11 @@ function initializeApp() {
 }
 
 // For Vercel serverless functions
+if (process.env.VERCEL) {
+  initializeApp();
+}
+
+// Start server (only in development)
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`CodeSnap server running on http://localhost:${PORT}`);
@@ -1219,5 +1425,5 @@ if (!process.env.VERCEL) {
   });
 }
 
-// Export for Vercel
+// Export app for Vercel
 module.exports = app;
